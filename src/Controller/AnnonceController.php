@@ -9,6 +9,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
@@ -94,6 +96,48 @@ class AnnonceController extends AbstractController
         ]);
     }
 
+    /**
+     * @Route("/contacter/{id}", name="contacter")
+     */
+    public function contacter($id, AnnonceRepository $repository)
+    {
+        $annonce = $repository->find($id);
+        $annonceur = $annonce->getAnnonceur();
+
+
+        return $this->render('annonce/annonce-contacter.html.twig', [
+
+            "annonceur" => $annonceur
+        ]);
+    }
+
+    /**
+     * @Route("/envoimail", name="envoimail")
+     * @param MailerInterface $mailer
+     *
+     */
+    public function envoimail(MailerInterface $mailer, Request $request)
+    {
+        $destinataire = $request->request->get('email');
+        $destinateur = $request->request->get('annonceur');
+        $message = $request->request->get('message');
+
+        $email = (new Email())
+            ->from($destinataire)
+            ->to($destinateur)
+            //->cc('cc@example.com')
+            //->bcc('bcc@example.com')
+            //->replyTo('fabien@example.com')
+            //->priority(Email::PRIORITY_HIGH)
+            ->subject('Time for Symfony Mailer!')
+            ->text($message)
+            ->html('<p>See Twig integration for better HTML integration!</p>');
+
+        $mailer->send($email);
+        return new Response(
+            'Email was sent'
+        );
+    }
 
 
 }
